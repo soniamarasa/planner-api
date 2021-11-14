@@ -29,13 +29,13 @@ const filterRenderItems = async (req, res) => {
 };
 
 const newItem = async (req, res) => {
-  const { description, type, where } = req.body;
+  const { description, type, where, obs } = req.body;
   for (let i = 0; i < where.length; i++) {
     let item = new itemModel({
       description,
       type,
       where: where[i],
-      obs: '',
+      obs,
       started: false,
       finished: false,
       important: false,
@@ -48,7 +48,7 @@ const newItem = async (req, res) => {
       res.status(500).send('Ocorreu um erro ao cadastrar o item' + error);
     }
   }
-  res.send('Item lançado com sucesso');
+  res.send({message:'Item lançado com sucesso'});
 };
 
 const editItem = async (req, res) => {
@@ -131,7 +131,7 @@ const deleteItem = async (req, res) => {
         message: 'Item nao encontrado',
       });
     } else {
-      res.send('Item excluido com sucesso!');
+      res.send({ message: 'Item excluido com sucesso!' });
     }
   } catch (error) {
     res.status(500).send('Ocorreu um erro em deletar o item' + error);
@@ -141,7 +141,7 @@ const deleteItem = async (req, res) => {
 const resetData = async (_, res) => {
   try {
     await itemModel.deleteMany();
-    res.send('Itens deletados com sucesso');
+    res.send({ message: 'Itens deletados com sucesso' });
   } catch (error) {
     res.status(500).send('Ocorreu um erro ao resetar' + error);
   }

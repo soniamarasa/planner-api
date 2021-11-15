@@ -6,7 +6,7 @@ const renderItems = async (_, res) => {
     const getItems = await itemModel.find();
     res.send(getItems);
   } catch (error) {
-    res.send(500).send('Ocorreu um erro na busca de itens' + error);
+    res.send(500).send({ message:'Ocorreu um erro na busca de itens' + error});
   }
 };
 
@@ -19,19 +19,21 @@ const filterRenderItems = async (req, res) => {
       where: filterWhere,
     });
     if (!getItems) {
-      res.send('Nenhum item encontrado');
+      res.send({ message:'Nenhum item encontrado'});
     } else {
       res.send(getItems);
     }
   } catch (error) {
-    res.status(500).send('Ocorreu um erro na busca dos itens' + error);
+    res.status(500).send({ message:'Ocorreu um erro na busca dos itens' + error});
   }
 };
 
 const newItem = async (req, res) => {
   const { description, type, where, obs } = req.body;
+  let item;
+  let itemsArray = [];
   for (let i = 0; i < where.length; i++) {
-    let item = new itemModel({
+    item = new itemModel({
       description,
       type,
       where: where[i],
@@ -41,14 +43,15 @@ const newItem = async (req, res) => {
       important: false,
       canceled: false,
     });
+    itemsArray.push(item)
 
     try {
       await item.save();
     } catch (error) {
-      res.status(500).send('Ocorreu um erro ao cadastrar o item' + error);
+      res.status(500).send({ message:'Ocorreu um erro ao cadastrar o item' + error});
     }
   }
-  res.send({message:'Item lançado com sucesso'});
+  res.send(itemsArray);
 };
 
 const editItem = async (req, res) => {
@@ -81,7 +84,7 @@ const editItem = async (req, res) => {
       res.send(itemEdited);
     }
   } catch (error) {
-    res.status(500).send('Ocorreu um erro ao editar o item' + error);
+    res.status(500).send({ message:'Ocorreu um erro ao editar o item' + error});
   }
 };
 
@@ -115,7 +118,7 @@ const updateStatus = async (req, res) => {
       res.send(classUpdate);
     }
   } catch (error) {
-    res.status(500).send('Ocorreu um erro ao atualizar o status' + error);
+    res.status(500).send({ message:'Ocorreu um erro ao atualizar o status' + error});
   }
 };
 
@@ -134,7 +137,7 @@ const deleteItem = async (req, res) => {
       res.send({ message: 'Item excluido com sucesso!' });
     }
   } catch (error) {
-    res.status(500).send('Ocorreu um erro em deletar o item' + error);
+    res.status(500).send({ message:'Ocorreu um erro em deletar o item' + error});
   }
 };
 
@@ -143,7 +146,7 @@ const resetData = async (_, res) => {
     await itemModel.deleteMany();
     res.send({ message: 'Itens deletados com sucesso' });
   } catch (error) {
-    res.status(500).send('Ocorreu um erro ao resetar' + error);
+    res.status(500).send({ message:'Ocorreu um erro ao resetar' + error});
   }
 };
 

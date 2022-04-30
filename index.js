@@ -8,7 +8,7 @@ dotenv.config();
 
 const app = express(); //-> iniciando o express na const app
 
-conts corsOptions = {
+const corsOptions = {
     origin: '*'
 };
 app.use(cors(corsOptions));

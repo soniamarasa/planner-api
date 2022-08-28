@@ -7,7 +7,12 @@ import routes from './routes/routes.js';
 dotenv.config();
 
 const app = express(); //-> iniciando o express na const app
-app.use(cors()); //-> configurando cors
+
+const corsOptions = {
+    origin: '*'
+};
+app.use(cors(corsOptions));
+
 app.use(express.json()); //-> diz para o express para retornar os dados em formato json
 
 const { DB_CONNECTION } = process.env;

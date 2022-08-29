@@ -1,7 +1,14 @@
 import express from 'express';
 import { renderItems, filterRenderItems, newItem, editItem, updateStatus, deleteItem, resetData } from '../services/itemService.js';
+import { createAccount, login, updateUser } from '../services/userService.js';
+
 
 const router = express.Router() //-> Responsável por fazer o roteamento das rotas
+
+
+router.post('/createAccount', createAccount); // -> Cadastro usuario
+router.post('/login', login); // -> Login usuario
+router.put('/updateUser/:id', updateUser); // -> Update user
 
 router.get('/getItems', renderItems); //-> (rota não usada(ver 2ª rota)) renderizando itens na pagina
 router.get('/getItems/:where', filterRenderItems); //-> Para renderizar os itens de acordo com a propriedade where ( segunda recebe itens com where = mon)

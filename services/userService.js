@@ -5,6 +5,7 @@ import * as Yup from 'yup';
 
 import userModel from '../models/userModel.js';
 import authConfig from '../config/auth.js';
+import sendEmail from '../utils/sendEmail.js';
 
 const createAccount = async (req, res) => {
   let { email, password } = req.body;
@@ -63,7 +64,7 @@ const login = async (req, res) => {
     console.log(checkPassword);
 
     if (checkPassword) {
-      const { _id, email, name, gender, birthdate } = userExists;
+      const { _id, email, name, gender, birthdate, password } = userExists;
       return res.json({
         user: {
           id: _id,
@@ -71,6 +72,7 @@ const login = async (req, res) => {
           email,
           gender,
           birthdate,
+          password
         },
         token: jwt.sign({ _id }, authConfig.secret, {
           expiresIn: authConfig.expiresIn,
@@ -168,4 +170,69 @@ const updateUser = async (req, res) => {
   }
 };
 
-export { createAccount, login, updateUser };
+const recoverPassword = async (req, res) => {
+  let { email } = req.body;
+
+  const schema = Yup.object().shape({
+    email: Yup.string().email().required(),
+  });
+
+  if (!(await schema.isValid(req.body)))
+    return res.status(400).json({ error: 'Falha na validação.' });
+
+  const userExists = await userModel.findOne({
+    email,
+  });
+
+  if (!userExists)
+    return res.status(400).json({ error: 'Usuário não existe.' });
+  else {
+    const link = `${process.env.BASE_URL}/password-reset/${userExists._id}`;
+    await sendEmail(userExists.email, 'Redefinir nova senha', link);
+
+    return res.send(
+      'O link para redefinir uma nova senha foi enviado para o seu email'
+    );
+  }
+};
+
+
+const resetPassword = async (req, res) => {
+  let { password, userId} = req.body;
+
+  const schema = Yup.object().shape({
+    userId: Yup.string().required(),
+    password: Yup.string().required().min(6),
+  });
+
+  if (!(await schema.isValid(req.body)))
+    return res.status(400).json({ error: 'Falha na validação.' });
+
+    const userExists = await userModel.findById({
+      _id: userId,
+    });
+
+  if (!userExists)
+    return res.status(400).json({ error: 'Usuário não existe.' });
+  else {
+    req.body.password = await bcrypt.hash(password, 8);
+
+    const userUpdated = {
+      email: userExists.email,
+      name: userExists.name,
+      gender: userExists.gender,
+      birthdate: userExists.birthdate,
+      password: req.body.password,
+    };
+
+    await userModel.findByIdAndUpdate(
+      {
+        _id: userId,
+      },
+      userUpdated
+    );
+    return res.json({ message: "Senha alterada com sucesso!"});
+  }
+};
+
+export { createAccount, login, updateUser, recoverPassword, resetPassword };

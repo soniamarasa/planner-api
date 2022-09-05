@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const itemSchema = mongoose.Schema({
-    idUser: String,
+    userId: String,
     description: String,
     type: String,
     where: String,

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import itemModel from '../models/itemModel.js';
 
-const renderItems = async (_, res) => {
+const renderItems = async (req, res) => {
   const userId = req.params.userId;
   try {
     const getItems = await itemModel.find({

@@ -4,7 +4,6 @@ import bcrypt from 'bcryptjs';
 import * as Yup from 'yup';
 
 import userModel from '../models/userModel.js';
-import authConfig from '../config/auth.js';
 import sendEmail from '../utils/sendEmail.js';
 
 const createAccount = async (req, res) => {
@@ -61,7 +60,6 @@ const login = async (req, res) => {
     return res.status(400).json({ error: 'Usuário não existe.' });
   else {
     const checkPassword = await bcrypt.compare(password, userExists.password);
-    console.log(checkPassword);
 
     if (checkPassword) {
       const { _id, email, name, gender, birthdate, password } = userExists;
@@ -72,15 +70,45 @@ const login = async (req, res) => {
           email,
           gender,
           birthdate,
-          password
+          token: jwt.sign({ _id }, process.env.SECRET, {
+            expiresIn: process.env.EXPIRESIN,
+          }),
         },
-        token: jwt.sign({ _id }, authConfig.secret, {
-          expiresIn: authConfig.expiresIn,
-        }),
       });
     } else {
       return res.status(400).json({ error: 'Senha incorreta' });
     }
+  }
+};
+
+const logout = async (req, res) => {
+  let { id } = req.body;
+
+  const userExists = await userModel.findById({
+    _id: id,
+  });
+
+  if (!userExists)
+    return res.status(400).json({ error: 'Usuário não existe.' });
+  else {
+    return res.json({
+      user: null,
+    });
+  }
+};
+
+const getUser = async (req, res) => {
+  const userId = req.params.idUser;
+  try {
+    let user = await userModel.find({
+      _id: userId,
+    });
+
+    delete user['password'];
+
+    res.send(user);
+  } catch (error) {
+    res.send(500).send({ message: 'Usuário não encontrado' + error });
   }
 };
 
@@ -133,7 +161,6 @@ const updateUser = async (req, res) => {
         return res.status(400).json({ error: 'Email já cadastrado!' });
     }
 
-    console.log(oldPassword);
     if (oldPassword) {
       const checkPassword = await bcrypt.compare(
         oldPassword,
@@ -190,15 +217,15 @@ const recoverPassword = async (req, res) => {
     const link = `${process.env.BASE_URL}/password-reset/${userExists._id}`;
     await sendEmail(userExists.email, 'Redefinir nova senha', link);
 
-    return res.send(
-      'O link para redefinir uma nova senha foi enviado para o seu email'
-    );
+    return res.json({
+      message:
+        'O link para redefinir uma nova senha foi enviado para o seu email',
+    });
   }
 };
 
-
 const resetPassword = async (req, res) => {
-  let { password, userId} = req.body;
+  let { password, userId } = req.body;
 
   const schema = Yup.object().shape({
     userId: Yup.string().required(),
@@ -208,9 +235,9 @@ const resetPassword = async (req, res) => {
   if (!(await schema.isValid(req.body)))
     return res.status(400).json({ error: 'Falha na validação.' });
 
-    const userExists = await userModel.findById({
-      _id: userId,
-    });
+  const userExists = await userModel.findById({
+    _id: userId,
+  });
 
   if (!userExists)
     return res.status(400).json({ error: 'Usuário não existe.' });
@@ -231,8 +258,34 @@ const resetPassword = async (req, res) => {
       },
       userUpdated
     );
-    return res.json({ message: "Senha alterada com sucesso!"});
+    return res.json({ message: 'Senha alterada com sucesso!' });
   }
 };
 
-export { createAccount, login, updateUser, recoverPassword, resetPassword };
+const authorization = async (req, res, next) => {
+  const token = req.headers['authorization'];
+
+  if (!token)
+    return res.status(401).json({ auth: false, message: 'No token provided.' });
+
+  jwt.verify(token, process.env.SECRET, function (err, decoded) {
+    if (err)
+      return res
+        .status(500)
+        .json({ auth: false, message: 'Failed to authenticate token.' });
+
+    req.userId = decoded.id;
+    next();
+  });
+};
+
+export {
+  login,
+  logout,
+  authorization,
+  createAccount,
+  updateUser,
+  recoverPassword,
+  resetPassword,
+  getUser,
+};

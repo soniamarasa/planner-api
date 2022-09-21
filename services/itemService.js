@@ -11,7 +11,7 @@ const renderItems = async (req, res) => {
   } catch (error) {
     res
       .send(500)
-      .send({ message: 'Ocorreu um erro na busca de itens' + error });
+      .send({ message: 'An error occurred while searching for items.' + error });
   }
 };
 
@@ -26,14 +26,14 @@ const filterRenderItems = async (req, res) => {
       where: filterWhere,
     });
     if (!getItems) {
-      res.send({ message: 'Nenhum item encontrado' });
+      res.send({ message: 'No items found' });
     } else {
       res.send(getItems);
     }
   } catch (error) {
     res
       .status(500)
-      .send({ message: 'Ocorreu um erro na busca dos itens' + error });
+      .send({ message: 'An error occurred while searching for items' + error });
   }
 };
 
@@ -61,7 +61,7 @@ const newItem = async (req, res) => {
     } catch (error) {
       res
         .status(500)
-        .send({ message: 'Ocorreu um erro ao cadastrar o item' + error });
+        .send({ message: 'An error occurred while registering the item.' + error });
     }
   }
   res.send(itemsArray);
@@ -87,7 +87,7 @@ const editItem = async (req, res) => {
     if (item.userId !== userId) {
       return res
         .status(500)
-        .send({ message: 'Você não tem permissão para editar esse item.' });
+        .send({ message: 'You do not have permission to edit this item.' });
     }
 
     const itemEdited = await itemModel.findByIdAndUpdate(
@@ -102,7 +102,7 @@ const editItem = async (req, res) => {
 
     if (!itemEdited) {
       res.send({
-        message: 'Item nao encontrado',
+        message: 'Item not found.',
       });
     } else {
       res.send(itemEdited);
@@ -110,7 +110,7 @@ const editItem = async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .send({ message: 'Ocorreu um erro ao editar o item' + error });
+      .send({ message: 'An error occurred while editing the item.' + error });
   }
 };
 
@@ -132,7 +132,7 @@ const updateStatus = async (req, res) => {
     });
     if (item.userId !== userId) {
       return res.status(500).send({
-        message: 'Você não tem permissão para alterar o status desse item.',
+        message: 'You do not have permission to change the status of this item.',
       });
     }
     const classUpdate = await itemModel.findByIdAndUpdate(
@@ -147,7 +147,7 @@ const updateStatus = async (req, res) => {
 
     if (!classUpdate) {
       res.send({
-        message: 'Item nao encontrado',
+        message: 'Item not found.',
       });
     } else {
       res.send(classUpdate);
@@ -155,7 +155,7 @@ const updateStatus = async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .send({ message: 'Ocorreu um erro ao atualizar o status' + error });
+      .send({ message: 'An error occurred while updating the status.' + error });
   }
 };
 
@@ -169,7 +169,7 @@ const deleteItem = async (req, res) => {
     });
     if (item.userId !== userId) {
       return res.status(500).send({
-        message: 'Você não tem permissão para alterar o status desse item.',
+        message: "You don't have permission to delete this item.",
       });
     }
 
@@ -178,15 +178,15 @@ const deleteItem = async (req, res) => {
     });
     if (!dataId) {
       res.send({
-        message: 'Item nao encontrado',
+        message: 'Item not found.',
       });
     } else {
-      res.send({ message: 'Item excluido com sucesso!' });
+      res.send({ message: 'Successfully deleted item!' });
     }
   } catch (error) {
     res
       .status(500)
-      .send({ message: 'Ocorreu um erro em deletar o item' + error });
+      .send({ message: 'An error occurred while deleting the item.' + error });
   }
 };
 
@@ -199,14 +199,14 @@ const resetData = async (req, res) => {
     });
     if (item.userId !== userId) {
       return res.status(500).send({
-        message: 'Você não tem permissão para alterar o status desse item.',
+        message: "You don't have permission.",
       });
     }
 
     await itemModel.deleteMany();
-    res.send({ message: 'Itens deletados com sucesso' });
+    res.send({ message: 'Items were successfully deleted' });
   } catch (error) {
-    res.status(500).send({ message: 'Ocorreu um erro ao resetar' + error });
+    res.status(500).send({ message: 'An error occurred while deleting the items' + error });
   }
 };
 

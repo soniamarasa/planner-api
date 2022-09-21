@@ -11,20 +11,21 @@ const createAccount = async (req, res) => {
 
   const schema = Yup.object().shape({
     email: Yup.string().email().required(),
-    password: Yup.string().required().min(6),
+    password: Yup.string().required().min(8),
     name: Yup.string().required(),
     birthdate: Yup.date().required(),
     gender: Yup.string().required(),
   });
 
   if (!(await schema.isValid(req.body)))
-    return res.status(400).json({ error: 'Falha na validação.' });
+    return res.status(400).json({ error: 'Validation failed.' });
 
   const userExists = await userModel.findOne({
     email,
   });
 
-  if (userExists) return res.status(400).json({ error: 'Usuário já existe.' });
+  if (userExists)
+    return res.status(400).json({ error: 'User already exists.' });
 
   req.body.password = await bcrypt.hash(password, 8);
 
@@ -35,9 +36,7 @@ const createAccount = async (req, res) => {
     return res.json({ id, name, email, gender, birthdate });
   } catch (error) {
     console.log(error);
-    return res
-      .status(400)
-      .json({ error: 'Não foi possível criar a sua conta' });
+    return res.status(400).json({ error: 'Unable to create your account.' });
   }
 };
 
@@ -46,18 +45,18 @@ const login = async (req, res) => {
 
   const schema = Yup.object().shape({
     email: Yup.string().email().required(),
-    password: Yup.string().required().min(6),
+    password: Yup.string().required(),
   });
 
   if (!(await schema.isValid(req.body)))
-    return res.status(400).json({ error: 'Falha na validação.' });
+    return res.status(400).json({ error: 'Validation failed.' });
 
   const userExists = await userModel.findOne({
     email,
   });
 
   if (!userExists)
-    return res.status(400).json({ error: 'Usuário não existe.' });
+    return res.status(400).json({ error: 'User does not exist.' });
   else {
     const checkPassword = await bcrypt.compare(password, userExists.password);
 
@@ -76,7 +75,7 @@ const login = async (req, res) => {
         },
       });
     } else {
-      return res.status(400).json({ error: 'Senha incorreta' });
+      return res.status(400).json({ error: 'Incorrect password.' });
     }
   }
 };
@@ -89,7 +88,7 @@ const logout = async (req, res) => {
   });
 
   if (!userExists)
-    return res.status(400).json({ error: 'Usuário não existe.' });
+    return res.status(400).json({ error: 'User does not exist.' });
   else {
     return res.json({
       user: null,
@@ -98,9 +97,9 @@ const logout = async (req, res) => {
 };
 
 const getUser = async (req, res) => {
-  const userId = req.params.idUser;
+  const userId = req.params.userId;
   try {
-    let user = await userModel.find({
+    let user = await userModel.findOne({
       _id: userId,
     });
 
@@ -108,7 +107,7 @@ const getUser = async (req, res) => {
 
     res.send(user);
   } catch (error) {
-    res.send(500).send({ message: 'Usuário não encontrado' + error });
+    res.send(500).send({ message: 'User not found' + error });
   }
 };
 
@@ -124,7 +123,7 @@ const updateUser = async (req, res) => {
   } = req.body;
   const { id } = req.params;
 
-  if (!id) return res.status(400).json({ error: 'campo id inválido' });
+  if (!id) return res.status(400).json({ error: 'Invalid id field' });
 
   const schema = Yup.object().shape({
     name: Yup.string(),
@@ -143,14 +142,14 @@ const updateUser = async (req, res) => {
   });
 
   if (!(await schema.isValid(req.body)))
-    return res.status(400).json({ error: 'Falha na validação.' });
+    return res.status(400).json({ error: 'Validation failed.' });
 
   const userExists = await userModel.findById({
     _id: id,
   });
 
   if (!userExists)
-    return res.status(400).json({ error: 'Usuário não existe.' });
+    return res.status(400).json({ error: 'User does not exist.' });
   else {
     if (email !== userExists.email) {
       const emailExists = await userModel.findOne({
@@ -158,7 +157,7 @@ const updateUser = async (req, res) => {
       });
 
       if (emailExists)
-        return res.status(400).json({ error: 'Email já cadastrado!' });
+        return res.status(400).json({ error: 'E-mail already registered!' });
     }
 
     if (oldPassword) {
@@ -167,11 +166,11 @@ const updateUser = async (req, res) => {
         userExists.password
       );
       if (!checkPassword)
-        return res.status(401).json({ error: 'Senha incorreta.' });
+        return res.status(400).json({ error: 'Incorrect password.' });
     }
 
     if (password && confirmPassword && password !== confirmPassword) {
-      return res.status(401).json({ error: 'Senhas não conferem.' });
+      return res.status(400).json({ error: 'Passwords do not match.' });
     }
 
     if (password) req.body.password = await bcrypt.hash(password, 8);
@@ -198,49 +197,52 @@ const updateUser = async (req, res) => {
 };
 
 const recoverPassword = async (req, res) => {
-  let { email } = req.body;
+  let { email, host } = req.body;
 
   const schema = Yup.object().shape({
     email: Yup.string().email().required(),
   });
 
   if (!(await schema.isValid(req.body)))
-    return res.status(400).json({ error: 'Falha na validação.' });
+    return res.status(400).json({ error: 'Validation failed.' });
 
   const userExists = await userModel.findOne({
     email,
   });
 
   if (!userExists)
-    return res.status(400).json({ error: 'Usuário não existe.' });
+    return res.status(400).json({ error: 'User does not exist.' });
   else {
-    const link = `${process.env.BASE_URL}/password-reset/${userExists._id}`;
-    await sendEmail(userExists.email, 'Redefinir nova senha', link);
+    let token = jwt.sign({ _id: userExists._id }, process.env.SECRET, {
+      expiresIn: '2h',
+    });
+
+    const link = `${host}/password-reset/${token}`;
+    await sendEmail(userExists.email, 'Reset your password', link);
 
     return res.json({
-      message:
-        'O link para redefinir uma nova senha foi enviado para o seu email',
+      message: 'The link to reset a new password has been sent to your email.',
     });
   }
 };
 
 const resetPassword = async (req, res) => {
-  let { password, userId } = req.body;
+  let { password } = req.body;
+  const userId = req.userId;
 
   const schema = Yup.object().shape({
-    userId: Yup.string().required(),
-    password: Yup.string().required().min(6),
+    password: Yup.string().required().min(8),
   });
 
   if (!(await schema.isValid(req.body)))
-    return res.status(400).json({ error: 'Falha na validação.' });
+    return res.status(400).json({ error: 'Validation failed.' });
 
   const userExists = await userModel.findById({
     _id: userId,
   });
 
   if (!userExists)
-    return res.status(400).json({ error: 'Usuário não existe.' });
+    return res.status(400).json({ error: 'User does not exist.' });
   else {
     req.body.password = await bcrypt.hash(password, 8);
 
@@ -258,7 +260,7 @@ const resetPassword = async (req, res) => {
       },
       userUpdated
     );
-    return res.json({ message: 'Senha alterada com sucesso!' });
+    return res.json({ message: 'Password changed successfully!' });
   }
 };
 
@@ -274,7 +276,7 @@ const authorization = async (req, res, next) => {
         .status(500)
         .json({ auth: false, message: 'Failed to authenticate token.' });
 
-    req.userId = decoded.id;
+    req.userId = decoded._id;
     next();
   });
 };

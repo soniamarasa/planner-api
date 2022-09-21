@@ -26,7 +26,7 @@ router.post('/login', login);
 router.post('/logout', logout);
 
 router.post('/retrievePassword', recoverPassword);
-router.post('/resetPassword', resetPassword);
+router.post('/resetPassword', authorization, resetPassword);
 
 router.get('/user/:userId', authorization, getUser);
 router.put('/updateUser/:id', authorization, updateUser);

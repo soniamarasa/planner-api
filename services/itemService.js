@@ -11,7 +11,9 @@ const renderItems = async (req, res) => {
   } catch (error) {
     res
       .send(500)
-      .send({ message: 'An error occurred while searching for items.' + error });
+      .send({
+        message: 'An error occurred while searching for items.' + error,
+      });
   }
 };
 
@@ -61,7 +63,9 @@ const newItem = async (req, res) => {
     } catch (error) {
       res
         .status(500)
-        .send({ message: 'An error occurred while registering the item.' + error });
+        .send({
+          message: 'An error occurred while registering the item.' + error,
+        });
     }
   }
   res.send(itemsArray);
@@ -132,7 +136,8 @@ const updateStatus = async (req, res) => {
     });
     if (item.userId !== userId) {
       return res.status(500).send({
-        message: 'You do not have permission to change the status of this item.',
+        message:
+          'You do not have permission to change the status of this item.',
       });
     }
     const classUpdate = await itemModel.findByIdAndUpdate(
@@ -141,7 +146,7 @@ const updateStatus = async (req, res) => {
       },
       itemClassUpdate,
       {
-        new: true
+        new: true,
       }
     );
 
@@ -155,7 +160,9 @@ const updateStatus = async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .send({ message: 'An error occurred while updating the status.' + error });
+      .send({
+        message: 'An error occurred while updating the status.' + error,
+      });
   }
 };
 
@@ -191,22 +198,17 @@ const deleteItem = async (req, res) => {
 };
 
 const resetData = async (req, res) => {
-  const userId = req.params.userId;
+  const userId = req.userId;
+  console.log(req.userId);
 
   try {
-    const item = await itemModel.findById({
-      _id: id,
-    });
-    if (item.userId !== userId) {
-      return res.status(500).send({
-        message: "You don't have permission.",
-      });
-    }
 
-    await itemModel.deleteMany();
+    await itemModel.deleteMany({ userId: userId });
     res.send({ message: 'Items were successfully deleted' });
   } catch (error) {
-    res.status(500).send({ message: 'An error occurred while deleting the items' + error });
+    res
+      .status(500)
+      .send({ message: 'An error occurred while deleting the items' + error });
   }
 };
 

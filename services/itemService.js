@@ -9,11 +9,9 @@ const renderItems = async (req, res) => {
     });
     res.send(getItems);
   } catch (error) {
-    res
-      .send(500)
-      .send({
-        message: 'An error occurred while searching for items.' + error,
-      });
+    res.send(500).send({
+      message: 'An error occurred while searching for items.' + error,
+    });
   }
 };
 
@@ -61,11 +59,9 @@ const newItem = async (req, res) => {
     try {
       await item.save();
     } catch (error) {
-      res
-        .status(500)
-        .send({
-          message: 'An error occurred while registering the item.' + error,
-        });
+      res.status(500).send({
+        message: 'An error occurred while registering the item.' + error,
+      });
     }
   }
   res.send(itemsArray);
@@ -158,11 +154,9 @@ const updateStatus = async (req, res) => {
       res.send(classUpdate);
     }
   } catch (error) {
-    res
-      .status(500)
-      .send({
-        message: 'An error occurred while updating the status.' + error,
-      });
+    res.status(500).send({
+      message: 'An error occurred while updating the status.' + error,
+    });
   }
 };
 
@@ -199,10 +193,8 @@ const deleteItem = async (req, res) => {
 
 const resetData = async (req, res) => {
   const userId = req.userId;
-  console.log(req.userId);
 
   try {
-
     await itemModel.deleteMany({ userId: userId });
     res.send({ message: 'Items were successfully deleted' });
   } catch (error) {

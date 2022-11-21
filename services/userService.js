@@ -218,7 +218,7 @@ const recoverPassword = async (req, res) => {
     });
 
     const link = `${host}/password-reset/${token}`;
-    await sendEmail(userExists.email, 'Reset your password', link);
+    await sendEmail(userExists.email, userExists.name, 'Reset your password', link);
 
     return res.json({
       message: 'The link to reset a new password has been sent to your email.',
